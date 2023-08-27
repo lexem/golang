@@ -3,7 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 )
+
+type DataCenter struct {
+	index            int
+	resetCount       int
+	turnedOffServers map[int]bool
+}
+
+func (dc DataCenter) metric(serversCount int) int {
+	turnedOn := serversCount - len(dc.turnedOffServers)
+	return turnedOn * dc.resetCount
+}
 
 func main() {
 
@@ -15,57 +27,56 @@ func main() {
 
 	fmt.Fscanf(file, "%d %d %d\n", &dcCount, &serversCount, &commandCount)
 
-	var dcResetsCount = make([]int, dcCount)
-	var serversDisabled = make([][]bool, dcCount)
-	for i := range serversDisabled {
-		serversDisabled[i] = make([]bool, serversCount)
-	}
+	var dcMap = make(map[int]DataCenter)
 
 	for m := 0; m < commandCount; m++ {
 		var command string
-		var firstNum int
-		var secondNum int
+		var dcIndex int
+		var sIdx int
 
-		fmt.Fscanf(file, "%s %d %d\n", &command, &firstNum, &secondNum)
-		//convert to slice indexes
-		firstNum--
-		secondNum--
+		fmt.Fscanf(file, "%s %d %d\n", &command, &dcIndex, &sIdx)
 
 		if command == "RESET" {
-			dcResetsCount[firstNum]++
-
-			for i := 0; i < serversCount; i++ { // enable all servers in dc
-				serversDisabled[firstNum][i] = false
+			if dc, ok := dcMap[dcIndex]; !ok {
+				dc = DataCenter{
+					index:            dcIndex,
+					resetCount:       0,
+					turnedOffServers: nil,
+				}
+				dcMap[dcIndex] = dc
 			}
+
+			dc := dcMap[dcIndex]
+			dc.resetCount++
+			dc.turnedOffServers = nil
+			dcMap[dcIndex] = dc
 		}
 
 		if command == "DISABLE" {
-			serversDisabled[firstNum][secondNum] = true
+			if dc, ok := dcMap[dcIndex]; !ok {
+				dc = DataCenter{
+					index:            dcIndex,
+					resetCount:       0,
+					turnedOffServers: make(map[int]bool),
+				}
+				dcMap[dcIndex] = dc
+			} else if dc.turnedOffServers == nil {
+				dc.turnedOffServers = make(map[int]bool)
+				dcMap[dcIndex] = dc
+			}
+
+			dc := dcMap[dcIndex]
+			dc.turnedOffServers[sIdx] = true
 		}
 
 		if command == "GETMAX" || command == "GETMIN" {
-			var metricSlice = make([]int, dcCount)
-			for i := 0; i < dcCount; i++ {
-				// find all turned on
-				for j := 0; j < serversCount; j++ {
-					if !serversDisabled[i][j] {
-						metricSlice[i]++
-					}
-				}
-				// multiply to resets count
-				metricSlice[i] *= dcResetsCount[i]
-			}
+			var minIdx, maxIdx = findMinAndMaxIndex(dcMap, serversCount)
 
-			var min, max = findMinAndMaxIndex(metricSlice)
-
-			var result int
 			if command == "GETMIN" {
-				result = min
+				fmt.Println(minIdx)
 			} else {
-				result = max
+				fmt.Println(maxIdx)
 			}
-
-			fmt.Println(result + 1) // plus one because 1-based numeration
 
 		}
 
@@ -73,17 +84,42 @@ func main() {
 
 }
 
-func findMinAndMaxIndex(a []int) (minIndex int, maxIndex int) {
-	var min, max = a[0], a[0]
-	for index, value := range a {
-		if value < min {
-			min = value
-			minIndex = index
+func findMinAndMaxIndex(dcMap map[int]DataCenter, serversCount int) (minIndex int, maxIndex int) {
+	keys := sortedKeys(dcMap)
+	//fmt.Println("--------", keys)
+	firstKey := keys[0]
+
+	var min = dcMap[firstKey].metric(serversCount)
+	var max = min
+
+	minIndex = dcMap[firstKey].index
+	maxIndex = minIndex
+
+	for _, key := range keys {
+		dc := dcMap[key]
+		metric := dc.metric(serversCount)
+		//fmt.Println("--------", metric, dc)
+		if metric < min {
+			min = metric
+			minIndex = dc.index
 		}
-		if value > max {
-			max = value
-			maxIndex = index
+		if metric > max {
+			max = metric
+			maxIndex = dc.index
 		}
 	}
+
 	return minIndex, maxIndex
+}
+
+func sortedKeys(m map[int]DataCenter) []int {
+	keys := make([]int, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+
+	sort.Ints(keys)
+	return keys
 }
