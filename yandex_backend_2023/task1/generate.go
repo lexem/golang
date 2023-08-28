@@ -13,7 +13,7 @@ func main() {
 
 	var commandCount = 12
 
-	f, _ := os.Create("generated.txt")
+	f, _ := os.Create("input.txt")
 	defer f.Close()
 
 	f.WriteString(fmt.Sprintf("%d %d %d", dcCount, serversCount, commandCount))
