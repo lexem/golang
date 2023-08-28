@@ -85,6 +85,11 @@ func main() {
 }
 
 func findMinAndMaxIndex(dcMap map[int]DataCenter, serversCount int) (minIndex int, maxIndex int) {
+
+	if len(dcMap) == 0 {
+		return 1, 1
+	}
+
 	keys := sortedKeys(dcMap)
 	//fmt.Println("--------", keys)
 	firstKey := keys[0]
