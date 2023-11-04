@@ -1,0 +1,1 @@
+Лекция доступна по ссылке [Youtube](https://www.youtube.com/watch?v=de28y8Dcvkg)
