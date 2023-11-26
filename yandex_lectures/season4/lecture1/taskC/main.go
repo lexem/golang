@@ -46,7 +46,6 @@ func main() {
 
 	c := merge(a, b)
 	fmt.Print(strings.Trim(fmt.Sprint(c), "[]"))
-	fmt.Println()
 }
 
 func merge(a, b []int) []int {

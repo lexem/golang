@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+var a []int
+var merged []int
+
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
@@ -24,7 +27,10 @@ func main() {
 	n, _ := strconv.Atoi(scanner.Text())
 	//fmt.Println(n)
 
-	var a []int
+	if n == 0 {
+		return
+	}
+
 	for i := 0; i < n; i++ {
 		scanner.Scan()
 		ai, _ := strconv.Atoi(scanner.Text())
@@ -32,60 +38,54 @@ func main() {
 	}
 	//fmt.Println(a)
 
-	a = mergeSort(a)
+	merged = make([]int, n)
+	mergeSort(0, n)
 	fmt.Print(strings.Trim(fmt.Sprint(a), "[]"))
 }
 
-func mergeSort(a []int) []int {
-	if len(a) == 1 {
-		return a
+func mergeSort(lIdx int, rIdx int) {
+	lenA := rIdx - lIdx
+	if lenA == 1 {
+		return
 	}
 
-	if len(a) == 2 {
-		if a[0] > a[1] {
-			a[0], a[1] = a[1], a[0]
-		}
-		return a
-	}
+	centerIdx := lenA/2 + lIdx
+	mergeSort(lIdx, centerIdx)
+	mergeSort(centerIdx, rIdx)
 
-	centerIdx := len(a) / 2
-	left := mergeSort(a[:centerIdx])
-	right := mergeSort(a[centerIdx:])
-
-	return merge(left, right)
+	merge(lIdx, centerIdx, rIdx)
 }
 
-func merge(a, b []int) []int {
-	lenA := len(a)
-	lenB := len(b)
+func merge(lIdx, centerIdx, rIdx int) {
+	lenA := centerIdx - lIdx
+	lenB := rIdx - centerIdx
 
-	lenC := lenA + lenB
-	c := make([]int, lenC)
+	aPointer := lIdx
+	bPointer := centerIdx
 
-	aPointer := 0
-	bPointer := 0
-
-	for i := 0; i < lenC; i++ {
-		if aPointer == lenA {
-			c[i] = b[bPointer]
+	for i := lIdx; i < lIdx+lenA+lenB; i++ {
+		if aPointer == lIdx+lenA {
+			merged[i] = a[bPointer]
 			bPointer++
 			continue
 		}
 
-		if bPointer == lenB {
-			c[i] = a[aPointer]
+		if bPointer == centerIdx+lenB {
+			merged[i] = a[aPointer]
 			aPointer++
 			continue
 		}
 
-		if a[aPointer] < b[bPointer] {
-			c[i] = a[aPointer]
+		if a[aPointer] < a[bPointer] {
+			merged[i] = a[aPointer]
 			aPointer++
 		} else {
-			c[i] = b[bPointer]
+			merged[i] = a[bPointer]
 			bPointer++
 		}
 	}
 
-	return c
+	for i := lIdx; i < lIdx+lenA+lenB; i++ {
+		a[i] = merged[i]
+	}
 }
