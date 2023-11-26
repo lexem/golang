@@ -44,13 +44,13 @@ func qSort(l, r int) {
 		return
 	}
 
-	p := partition(l, r)
+	equal, greater := partition(l, r)
 
-	qSort(l, p)
-	qSort(p+1, r)
+	qSort(l, equal)
+	qSort(greater, r)
 }
 
-func partition(l, r int) int {
+func partition(l, r int) (int, int) {
 	xIdx := rand.Intn(r - l)
 	x := a[xIdx+l]
 
@@ -77,5 +77,5 @@ func partition(l, r int) int {
 		}
 	}
 
-	return equal
+	return equal, greater
 }
