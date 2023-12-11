@@ -19,6 +19,11 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanWords)
 
+	// default MaxScanTokenSize 64*1024, but we need 2*10^5
+	// maybe we should use bufio.Reader instead
+	buf := make([]byte, 0, 1024*1024)
+	scanner.Buffer(buf, 1024*1024)
+
 	scanner.Scan()
 	runes := []rune(scanner.Text())
 
