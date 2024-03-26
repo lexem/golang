@@ -2,7 +2,10 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
+	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
@@ -21,8 +24,8 @@ func main() {
 	scanner.Split(bufio.ScanWords)
 
 	n := next(scanner)
-	next(scanner)
-	next(scanner)
+	s := next(scanner)
+	f := next(scanner)
 	r := next(scanner)
 
 	var villages = make([][]Schedule, n+1)
@@ -46,6 +49,46 @@ func main() {
 		schedule[time1] = time2
 	}
 
+	visited := make([]bool, n+1)
+
+	minTime := make([]int, n+1)
+	for i := 1; i <= n; i++ {
+		minTime[i] = math.MaxInt
+	}
+	minTime[s] = 0
+
+	h := &VillageHeap{Village{s, 0}}
+	heap.Init(h)
+
+	for h.Len() > 0 {
+		startVillage := heap.Pop(h).(Village)
+
+		if visited[startVillage.index] {
+			continue
+		}
+
+		for toIndex, schedule := range villages[startVillage.index] {
+			for time1, time2 := range schedule {
+				if startVillage.time > time1 {
+					continue
+				}
+
+				if time2 < minTime[toIndex] {
+					minTime[toIndex] = time2
+
+					heap.Push(h, Village{toIndex, time2})
+				}
+			}
+		}
+		visited[startVillage.index] = true
+	}
+
+	if minTime[f] == math.MaxInt {
+		fmt.Println("-1")
+		return
+	}
+
+	fmt.Print(minTime[f])
 }
 
 func next(scanner *bufio.Scanner) int {
