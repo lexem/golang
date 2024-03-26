@@ -2,17 +2,13 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"log"
 	"math"
 	"os"
 	"strconv"
 )
-
-type Edge struct {
-	to  int
-	len int
-}
 
 func main() {
 	file, err := os.Open("input.txt")
@@ -43,8 +39,8 @@ func main() {
 		scanner.Scan()
 		l, _ := strconv.Atoi(scanner.Text())
 
-		vertex[a] = append(vertex[a], Edge{to: b, len: l})
-		vertex[b] = append(vertex[b], Edge{to: a, len: l})
+		vertex[a] = append(vertex[a], Edge{index: b, dist: l})
+		vertex[b] = append(vertex[b], Edge{index: a, dist: l})
 	}
 
 	scanner.Scan()
@@ -62,32 +58,25 @@ func main() {
 	}
 	dist[s] = 0
 
-	for {
-		minIndex := -1
-		minValue := math.MaxInt
+	h := &EdgeHeap{Edge{s, 0}}
+	heap.Init(h)
 
-		for i := 1; i <= n; i++ {
-			if visited[i] {
-				continue
-			}
+	for h.Len() > 0 {
+		startEdge := heap.Pop(h).(Edge) //(*h)[0]
 
-			if dist[i] < minValue {
-				minIndex = i
-				minValue = dist[i]
-			}
+		if visited[startEdge.index] {
+			continue
 		}
 
-		if minIndex == -1 {
-			break
-		}
+		for _, edge := range vertex[startEdge.index] {
+			if startEdge.dist+edge.dist < dist[edge.index] {
+				dist[edge.index] = startEdge.dist + edge.dist
+				previous[edge.index] = startEdge.index
 
-		for _, edge := range vertex[minIndex] {
-			if minValue+edge.len < dist[edge.to] {
-				dist[edge.to] = minValue + edge.len
-				previous[edge.to] = minIndex
+				heap.Push(h, Edge{edge.index, startEdge.dist + edge.dist})
 			}
 		}
-		visited[minIndex] = true
+		visited[startEdge.index] = true
 	}
 
 	if dist[f] == math.MaxInt {
