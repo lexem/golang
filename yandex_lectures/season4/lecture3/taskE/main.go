@@ -2,8 +2,9 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"container/heap"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
@@ -11,11 +12,6 @@ import (
 type City struct {
 	time  int
 	speed int
-}
-
-type Edge struct {
-	index int
-	dist  int
 }
 
 func main() {
@@ -46,7 +42,73 @@ func main() {
 		vertex[b] = append(vertex[b], Edge{a, l})
 	}
 
-	fmt.Print(cities)
+	// find route from moscow to other cities
+	moscowIdx := 1
+
+	visited := make([]bool, n+1)
+	previous := make([]int, n+1)
+
+	dist := make([]int, n+1)
+	for i := 1; i <= n; i++ {
+		dist[i] = math.MaxInt
+	}
+	dist[moscowIdx] = 0
+
+	h := &EdgeHeap{Edge{moscowIdx, 0}}
+	heap.Init(h)
+
+	for h.Len() > 0 {
+		startEdge := heap.Pop(h).(Edge)
+
+		if visited[startEdge.index] {
+			continue
+		}
+
+		for _, edge := range vertex[startEdge.index] {
+			if startEdge.dist+edge.dist < dist[edge.index] {
+				dist[edge.index] = startEdge.dist + edge.dist
+				previous[edge.index] = startEdge.index
+
+				heap.Push(h, Edge{edge.index, startEdge.dist + edge.dist})
+			}
+		}
+		visited[startEdge.index] = true
+	}
+	//fmt.Println(previous)
+
+	// calculate time for each member without changes vehicle
+	minTime := make([]int, n+1)
+
+	for i := 2; i <= n; i++ { //exclude moscow, start from 2
+		s := moscowIdx
+		f := i
+
+		time := cities[i].time
+		speed := cities[i].speed
+
+		for j := f; j != s; j = previous[j] {
+			from := j
+			to := previous[j]
+			time += findDist(vertex[from], to) / speed
+		}
+
+		minTime[i] = time
+	}
+	//fmt.Println(minTime)
+
+	// try optimize minTime by dijkstra principle
+	visited = make([]bool, n+1)
+	visited[moscowIdx] = true
+
+}
+
+func findDist(edges []Edge, index int) int {
+	for _, edge := range edges {
+		if edge.index == index {
+			return edge.dist
+		}
+	}
+	return -1
 }
 
 func next(scanner *bufio.Scanner) int {
