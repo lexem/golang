@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"container/heap"
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -43,18 +44,61 @@ func main() {
 	}
 
 	// find route from moscow to other cities
-	moscowIdx := 1
+	minTime, _ := route(vertex, cities, 1)
+
+	// try optimize minTime by dijkstra principle
+	visited := make([]bool, n+1)
+
+	h := &EdgeHeap{}
+	heap.Init(h)
+	for i := 2; i <= n; i++ {
+		heap.Push(h, Edge{i, minTime[i]})
+	}
+
+	for h.Len() > 0 {
+		bestCityIdx := heap.Pop(h).(Edge).index
+		if visited[bestCityIdx] {
+			continue
+		}
+
+		toBestCityTime, _ := route(vertex, cities, bestCityIdx)
+
+		for i := 2; i <= n; i++ {
+			updatedTime := toBestCityTime[i] + minTime[bestCityIdx]
+			if updatedTime < minTime[i] {
+				minTime[i] = updatedTime
+				heap.Push(h, Edge{i, updatedTime})
+			}
+		}
+
+		visited[bestCityIdx] = true
+	}
+
+	fmt.Println(minTime)
+}
+
+func findDist(edges []Edge, index int) int {
+	for _, edge := range edges {
+		if edge.index == index {
+			return edge.dist
+		}
+	}
+	return -1
+}
+
+func route(vertex map[int][]Edge, cities []City, finishIdx int) (minTime []int, previous []int) {
+	n := len(cities) - 1
 
 	visited := make([]bool, n+1)
-	previous := make([]int, n+1)
+	previous = make([]int, n+1)
 
 	dist := make([]int, n+1)
 	for i := 1; i <= n; i++ {
 		dist[i] = math.MaxInt
 	}
-	dist[moscowIdx] = 0
+	dist[finishIdx] = 0
 
-	h := &EdgeHeap{Edge{moscowIdx, 0}}
+	h := &EdgeHeap{Edge{finishIdx, 0}}
 	heap.Init(h)
 
 	for h.Len() > 0 {
@@ -77,10 +121,10 @@ func main() {
 	//fmt.Println(previous)
 
 	// calculate time for each member without changes vehicle
-	minTime := make([]int, n+1)
+	minTime = make([]int, n+1)
 
 	for i := 2; i <= n; i++ { //exclude moscow, start from 2
-		s := moscowIdx
+		s := finishIdx
 		f := i
 
 		time := cities[i].time
@@ -96,19 +140,7 @@ func main() {
 	}
 	//fmt.Println(minTime)
 
-	// try optimize minTime by dijkstra principle
-	visited = make([]bool, n+1)
-	visited[moscowIdx] = true
-
-}
-
-func findDist(edges []Edge, index int) int {
-	for _, edge := range edges {
-		if edge.index == index {
-			return edge.dist
-		}
-	}
-	return -1
+	return
 }
 
 func next(scanner *bufio.Scanner) int {
