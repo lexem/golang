@@ -49,14 +49,14 @@ func main() {
 	// try optimize minTime by dijkstra principle
 	visited := make([]bool, n+1)
 
-	h := &EdgeHeap{}
+	h := &TimeHeap{}
 	heap.Init(h)
 	for i := 2; i <= n; i++ {
-		heap.Push(h, Edge{i, minTime[i]})
+		heap.Push(h, Time{i, minTime[i]})
 	}
 
 	for h.Len() > 0 {
-		bestCityIdx := heap.Pop(h).(Edge).index
+		bestCityIdx := heap.Pop(h).(Time).index
 		if visited[bestCityIdx] {
 			continue
 		}
@@ -67,7 +67,7 @@ func main() {
 			updatedTime := toBestCityTime[i] + minTime[bestCityIdx]
 			if updatedTime < minTime[i] {
 				minTime[i] = updatedTime
-				heap.Push(h, Edge{i, updatedTime})
+				heap.Push(h, Time{i, updatedTime})
 			}
 		}
 
@@ -86,7 +86,7 @@ func findDist(edges []Edge, index int) int {
 	return -1
 }
 
-func route(vertex map[int][]Edge, cities []City, finishIdx int) (minTime []int, previous []int) {
+func route(vertex map[int][]Edge, cities []City, finishIdx int) (minTime []float64, previous []int) {
 	n := len(cities) - 1
 
 	visited := make([]bool, n+1)
@@ -121,19 +121,19 @@ func route(vertex map[int][]Edge, cities []City, finishIdx int) (minTime []int, 
 	//fmt.Println(previous)
 
 	// calculate time for each member without changes vehicle
-	minTime = make([]int, n+1)
+	minTime = make([]float64, n+1)
 
 	for i := 2; i <= n; i++ { //exclude moscow, start from 2
 		s := finishIdx
 		f := i
 
-		time := cities[i].time
-		speed := cities[i].speed
+		time := float64(cities[i].time)
+		speed := float64(cities[i].speed)
 
 		for j := f; j != s; j = previous[j] {
 			from := j
 			to := previous[j]
-			time += findDist(vertex[from], to) / speed
+			time += float64(findDist(vertex[from], to)) / speed
 		}
 
 		minTime[i] = time
