@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// find route from moscow to other cities
-	minTime, _ := route(vertex, cities, 1)
+	minTime, previous := route(vertex, cities, 1)
 
 	// try optimize minTime by dijkstra principle
 	visited := make([]bool, n+1)
@@ -61,19 +61,24 @@ func main() {
 			continue
 		}
 
-		toBestCityTime, _ := route(vertex, cities, bestCityIdx)
+		toBestCityTime, toBestCityPrev := route(vertex, cities, bestCityIdx)
 
 		for i := 2; i <= n; i++ {
 			updatedTime := toBestCityTime[i] + minTime[bestCityIdx]
 			if updatedTime < minTime[i] {
 				minTime[i] = updatedTime
 				heap.Push(h, Time{i, updatedTime})
+
+				for cur := i; cur != bestCityIdx; cur = toBestCityPrev[cur] {
+					previous[cur] = toBestCityPrev[cur]
+				}
 			}
 		}
 
 		visited[bestCityIdx] = true
 	}
 
+	fmt.Println(previous)
 	fmt.Println(minTime)
 }
 
