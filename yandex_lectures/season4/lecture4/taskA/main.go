@@ -41,9 +41,9 @@ func generate(t int) {
 	} else {
 		for i := t; i <= n; i++ {
 			a[t], a[i] = a[i], a[t]
-			t++
-			generate(t)
-			t--
+
+			generate(t + 1)
+
 			a[t], a[i] = a[i], a[t]
 		}
 	}
