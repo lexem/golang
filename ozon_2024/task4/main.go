@@ -21,14 +21,14 @@ func main() {
 	var t int
 	fmt.Fscan(in, &t)
 
-	for i := 0; i < t; i++ {
+	for k := 0; k < t; k++ {
 
 		var n int
 		fmt.Fscan(in, &n)
 
-		members := make([]Member, n+1)
+		members := make([]Member, n)
 
-		for i := 1; i <= n; i++ {
+		for i := 0; i < n; i++ {
 			var time int
 			fmt.Fscan(in, &time)
 
@@ -39,18 +39,28 @@ func main() {
 			return members[i].time < members[j].time
 		})
 
-		for i, m := range members {
-			m.place = i
+		for i := 0; i < n; i++ {
+			currentPlace := i + 1
+			members[i].place = currentPlace
+
+			for j := i + 1; j < n; j++ {
+				if members[j].time-members[j-1].time <= 1 {
+					members[j].place = currentPlace
+					i++
+				} else {
+					break
+				}
+			}
 		}
+		//fmt.Fprintln(out, members)
 
 		sort.Slice(members, func(i, j int) bool {
 			return members[i].index < members[j].index
 		})
 
-		for _, m := range members {
-			fmt.Fprintln(out, m.index, m.time)
+		for i := 0; i < n-1; i++ {
+			fmt.Fprint(out, members[i].place, " ")
 		}
-
-		fmt.Fprintln(out)
+		fmt.Fprintln(out, members[n-1].place)
 	}
 }
