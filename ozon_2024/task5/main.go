@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
+	"strings"
 )
 
 type Dir struct {
@@ -15,31 +15,43 @@ type Dir struct {
 }
 
 func main() {
-	in := bufio.NewReader(os.Stdin)
+	decoder := json.NewDecoder(os.Stdin)
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 
 	var t int
-	fmt.Fscanln(in, &t)
+	decoder.Decode(&t)
 
 	for k := 0; k < t; k++ {
-
 		var n int
-		fmt.Fscanln(in, &n)
-
-		scanner := bufio.NewScanner(os.Stdin)
-
-		var jsonStr string
-		for i := 0; i < n; i++ {
-			scanner.Scan()
-			jsonStr += scanner.Text() + " "
-		}
+		decoder.Decode(&n) // read just for skipping, we don't need it
 
 		var dir Dir
-		if err := json.Unmarshal([]byte(jsonStr), &dir); err != nil {
-			log.Fatal(err)
-		}
+		decoder.Decode(&dir)
 
-		fmt.Fprintln(out, dir)
+		fmt.Fprintln(out, countHackedFiles(dir, false))
 	}
+}
+
+func countHackedFiles(dir Dir, infected bool) (result int) {
+	infected = infected || isDirInfected(dir) // isDirInfected will not calculated if infected==true already
+
+	if infected {
+		result += len(dir.Files)
+	}
+
+	for _, folder := range dir.Folders {
+		result += countHackedFiles(folder, infected)
+	}
+
+	return
+}
+
+func isDirInfected(dir Dir) bool {
+	for _, fileName := range dir.Files {
+		if strings.HasSuffix(fileName, ".hack") {
+			return true
+		}
+	}
+	return false
 }
